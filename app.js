@@ -65,17 +65,16 @@ async function loadData() {
     try {
         console.log("⏳ Conectando con Supabase...");
         
-        // 1. Pedimos los datos a la nube en lugar de al archivo local
+        // 1. Pedimos los datos a la nube
         const { data, error } = await supabase
-            .from('eventos') // Nombre de tu tabla
+            .from('eventos') 
             .select('*');
 
-        // Si hay un problema de permisos o de conexión, salta aquí
         if (error) throw error; 
         
-        console.log(`✅ ¡Éxito! ${data.length} eventos descargados de la base de datos.`);
+        console.log(`✅ ¡Éxito! ${data.length} eventos descargados.`);
 
-        // 2. Procesamos los datos igual que antes
+        // 2. Procesamos los datos
         allEvents = data
             .filter(ev => !regexSub.test(ev.name))
             .map(ev => {
@@ -99,19 +98,27 @@ async function loadData() {
                 };
             });
 
-        // 3. Ordenar y renderizar
+        // 3. Ordenar cronológicamente
         allEvents.sort((a, b) => a.parsedDate - b.parsedDate);
 
+        // 4. Actualizar las opciones de los desplegables (Continentes, Países, etc.)
         updateFilterOptions(allEvents);
+
+        // --- FILTRO POR DEFECTO: LONG JUMP ---
+        // Esto hace que el selector de "Todas las pruebas" cambie a Long Jump automáticamente
+        if (disciplineSelect) {
+            disciplineSelect.value = "Long Jump";
+        }
+        // -------------------------------------
+
+        // 5. Renderizar los eventos aplicando los filtros (incluyendo el de Long Jump)
         applyFilters();
 
     } catch (error) {
         console.error("❌ Error conectando a Supabase:", error);
-        // Opcional: Mostrar un aviso en la web si falla
         eventGrid.innerHTML = `<p style="color: red; padding: 20px;">Error al cargar el calendario. Por favor, recarga la página.</p>`;
     }
 }
-
 // 4. ACTUALIZAR SELECTORES DINÁMICOS
 function updateFilterOptions(events) {
     const validEvents = events.filter(e => e.parsedDate.getFullYear() === 2026);
@@ -458,5 +465,6 @@ if (signupForm) {
         }
     });
 }
+
 
 loadData();
